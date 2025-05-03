@@ -1,0 +1,105 @@
+#!/bin/bash
+
+set -e
+
+SAMBA_CONF="/etc/samba/smb.conf"
+SAMBA_USER=${SUDO_USER:-$(whoami)}
+
+# Function to install Samba
+install_samba() {
+    echo "Installing Samba..."
+    sudo apt update && sudo apt install -y samba
+    sudo systemctl enable smbd
+    sudo systemctl start smbd
+    echo "Samba installed and running."
+}
+
+# Function to restart Samba
+restart_samba() {
+    echo "Restarting Samba service..."
+    sudo systemctl restart smbd
+    echo "Samba restarted."
+}
+
+# Function to add a new share
+add_share() {
+    read -p "Enter absolute path to share (e.g. /srv/share1): " SHARE_DIR
+    SHARE_NAME=$(basename "$SHARE_DIR")
+
+    sudo mkdir -p "$SHARE_DIR"
+    sudo chown root:root "$SHARE_DIR" # You may change to another user
+    sudo chmod 0777 "$SHARE_DIR"
+
+    if grep -q "^\[${SHARE_NAME}\]" "$SAMBA_CONF"; then
+        echo "Share [$SHARE_NAME] already exists."
+        return
+    fi
+
+    echo "Adding share [$SHARE_NAME]..."
+    sudo bash -c "cat >> ${SAMBA_CONF}" <<EOL
+
+[${SHARE_NAME}]
+   path = ${SHARE_DIR}
+   browseable = yes
+   read only = no
+   guest ok = yes
+   force user = root   # ⚠️ WARNING: This gives root-level access to the share
+EOL
+
+    restart_samba
+}
+
+# Function to remove a share
+remove_share() {
+    read -p "Enter share name to disable (same as directory name): " SHARE_NAME
+
+    if ! grep -q "^\[${SHARE_NAME}\]" "$SAMBA_CONF"; then
+        echo "No such share [$SHARE_NAME] in smb.conf."
+        return
+    fi
+
+    sudo cp "$SAMBA_CONF" "${SAMBA_CONF}.bak"
+    sudo sed -i "/^\[${SHARE_NAME}\]/,/^$/d" "$SAMBA_CONF"
+
+    echo "Removed share [$SHARE_NAME]."
+    restart_samba
+}
+
+# Function to show current Samba shares
+show_config() {
+    echo ""
+    echo "====== Current Samba Shares ======"
+    awk '/^\[.*\]/{print $0}' "$SAMBA_CONF"
+    echo "=================================="
+}
+
+# Function to open Samba config file in nano
+edit_config() {
+    echo "Opening Samba configuration file in nano..."
+    sudo nano "$SAMBA_CONF"
+}
+
+# Menu
+while true; do
+    echo ""
+    echo "====== Samba Manager ======"
+    echo "1) Install Samba"
+    echo "2) Add a shared path"
+    echo "3) Disable (remove) a shared path"
+    echo "4) Restart Samba"
+    echo "5) View Samba configuration"
+    echo "6) Edit Samba configuration (nano)"
+    echo "7) Exit"
+    echo -n "Choose an option: "
+    read option
+    case $option in
+        1) install_samba ;;
+        2) add_share ;;
+        3) remove_share ;;
+        4) restart_samba ;;
+        5) show_config ;;
+        6) edit_config ;;
+        7) echo "Bye!"; exit 0 ;;
+        *) echo "Invalid option." ;;
+    esac
+done
