@@ -41,9 +41,11 @@ add_share() {
 [${SHARE_NAME}]
    path = ${SHARE_DIR}
    browseable = yes
-   read only = no
-   guest ok = yes
-   force user = root   # ⚠️ WARNING: This gives root-level access to the share
+   writable = yes
+   valid users = user
+   create mask = 0664
+   directory mask = 0775
+   
 EOL
 
     restart_samba
