@@ -1,0 +1,20 @@
+# Add a user
+sudo adduser username
+
+# Add a group
+sudo groupadd groupname
+
+# Add user to group
+sudo usermod -aG groupname username
+
+# Switch user
+su - username
+
+# Show current user
+whoami
+
+# List users
+cut -d: -f1 /etc/passwd
+
+# List groups
+cut -d: -f1 /etc/group

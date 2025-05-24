@@ -1,0 +1,7 @@
+﻿ðŸ“Š System Monitoring
+---------------------
+top            # Real-time system info
+htop           # Better top (if installed)
+df -h          # Disk usage in human-readable
+free -m        # RAM usage in MB
+uptime         # System uptime

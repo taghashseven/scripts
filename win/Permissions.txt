@@ -1,0 +1,6 @@
+﻿ðŸ”’ Permissions
+--------------
+chmod 755 file     # Set read/write/execute permissions
+chown user:group file  # Change file owner
+umask              # Show default permissions mask
+ls -l              # Show file permissions

@@ -1,0 +1,16 @@
+# View permissions
+ls -l
+
+# Change ownership
+sudo chown user:group file
+
+# Change permissions (symbolic)
+chmod u+x file     # user add execute
+chmod g-w file     # group remove write
+
+# Change permissions (numeric)
+chmod 755 file     # rwxr-xr-x
+
+# Special bits
+chmod +s file      # SetUID
+chmod +t dir       # Sticky bit

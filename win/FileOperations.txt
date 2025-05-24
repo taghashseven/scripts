@@ -1,0 +1,8 @@
+﻿ðŸ“‚ File Operations
+------------------
+ls             # List files
+cp src dest    # Copy file or directory
+mv src dest    # Move or rename
+rm file        # Delete file or folder
+touch file     # Create empty file
+mkdir name     # Make directory

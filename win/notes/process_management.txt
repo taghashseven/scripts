@@ -1,0 +1,13 @@
+# See running processes
+ps aux
+top / htop
+
+# Kill a process
+kill PID
+killall name
+
+# Run in background
+./job &
+
+# Bring background job to foreground
+fg

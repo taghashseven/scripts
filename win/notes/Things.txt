@@ -1,0 +1,23 @@
+# USERS
+
+1. Create a new user:
+   sudo adduser john
+
+2. Delete a user:
+   sudo deluser john
+
+3. View all users:
+   cat /etc/passwd
+
+4. Check current user:
+   whoami
+
+5. Switch to another user:
+   su - username
+
+6. Lock/Unlock user account:
+   sudo passwd -l username   # lock
+   sudo passwd -u username   # unlock
+
+7. Change user password:
+   sudo passwd username
