@@ -14,6 +14,19 @@ install_samba() {
     echo "Samba installed and running."
 }
 
+# Function to display help
+show_help() {
+    echo ""
+    echo "========== HELP =========="
+    echo "To access shared folders via Samba, ensure the following:"
+    echo "- A Linux user account exists (use 'adduser' if needed)."
+    echo "- The same user must be added to Samba using 'smbpasswd'."
+    echo "- This script will prompt you to add the user to Samba if needed."
+    echo "- Only users listed in 'valid users' can access the share."
+    echo "=========================="
+    echo ""
+}
+
 # Function to restart Samba
 restart_samba() {
     echo "Restarting Samba service..."
@@ -21,14 +34,30 @@ restart_samba() {
     echo "Samba restarted."
 }
 
-# Function to add a new share
 add_share() {
     read -p "Enter absolute path to share (e.g. /srv/share1): " SHARE_DIR
     SHARE_NAME=$(basename "$SHARE_DIR")
 
+    read -p "Enter the local username to allow access: " SHARE_USER
+
+    # Validate if the user exists
+    if ! id "$SHARE_USER" &>/dev/null; then
+        echo "Error: User '$SHARE_USER' does not exist. Please create the user first."
+        return
+    fi
+
+    # Add to Samba if not already added
+    if ! sudo pdbedit -L | grep -q "^$SHARE_USER:"; then
+        echo "User '$SHARE_USER' is not a Samba user."
+        echo "Adding Samba user (you'll be prompted to set a password)..."
+        sudo smbpasswd -a "$SHARE_USER"
+    else
+        echo "User '$SHARE_USER' already exists in Samba."
+    fi
+
     sudo mkdir -p "$SHARE_DIR"
-    sudo chown root:root "$SHARE_DIR" # You may change to another user
-    sudo chmod 0777 "$SHARE_DIR"
+    sudo chown "$SHARE_USER:$SHARE_USER" "$SHARE_DIR"
+    sudo chmod 0770 "$SHARE_DIR"
 
     if grep -q "^\[${SHARE_NAME}\]" "$SAMBA_CONF"; then
         echo "Share [$SHARE_NAME] already exists."
@@ -36,19 +65,21 @@ add_share() {
     fi
 
     echo "Adding share [$SHARE_NAME]..."
+
     sudo bash -c "cat >> ${SAMBA_CONF}" <<EOL
 
 [${SHARE_NAME}]
    path = ${SHARE_DIR}
    browseable = yes
    writable = yes
-   valid users = user
+   valid users = ${SHARE_USER}
    create mask = 0664
    directory mask = 0775
-   
+
 EOL
 
     restart_samba
+    echo "Share [$SHARE_NAME] added for user [$SHARE_USER]."
 }
 
 # Function to remove a share
@@ -91,7 +122,8 @@ while true; do
     echo "4) Restart Samba"
     echo "5) View Samba configuration"
     echo "6) Edit Samba configuration (nano)"
-    echo "7) Exit"
+    echo "7) Help"
+    echo "8) Exit"
     echo -n "Choose an option: "
     read option
     case $option in
@@ -101,7 +133,8 @@ while true; do
         4) restart_samba ;;
         5) show_config ;;
         6) edit_config ;;
-        7) echo "Bye!"; exit 0 ;;
+        7) show_help ;;
+        8) echo "Bye!"; exit 0 ;;
         *) echo "Invalid option." ;;
     esac
 done
